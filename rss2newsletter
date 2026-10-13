@@ -97,13 +97,28 @@ class rss2newsletter:
             return
 
         processed_entries_last_update = self.read_processed_entries_file()
-        for new_entry in self.check_for_new_entries(
+        new_entries = self.check_for_new_entries(
             processed_entries_last_update, feed.entries
-        ):
-            campaign_id = self.create_newsletter(new_entry.link, new_entry.title, new_entry.summary)
-            send_successful = self.send_newsletter(campaign_id)
-            if send_successful:
-                self.update_processed_entries_file(new_entry.link)
+        )
+        if not int(self.config["NEWSLETTER"].get("GROUP_EVENTS", 0)):
+            for new_entry in new_entries:
+                campaign_id = self.create_newsletter(new_entry.link, new_entry.title, new_entry.summary)
+                send_successful = self.send_newsletter(campaign_id)
+                if send_successful:
+                    self.update_processed_entries_file(new_entry.link)
+        else:
+            campaign_id = self.create_grouped_newsletter(new_entries)
+            if campaign_id:
+                send_successful = self.send_newsletter(campaign_id)
+                if send_successful:
+                    # Create the generator again, because it's been exhausted
+                    new_entries = self.check_for_new_entries(
+                        processed_entries_last_update, feed.entries
+                    )
+                    for new_entry in new_entries:
+                        self.update_processed_entries_file(new_entry.link)
+            else:
+                print("Skipped newsletter, no new entries")
 
     def fetch_rss(self) -> feedparser.FeedParserDict | None:
         """Fetch and parse RSS"""
@@ -173,6 +188,13 @@ class rss2newsletter:
         content = self.create_content(link, title, summary)
         return self.create_campaign(title, content)
 
+    def create_grouped_newsletter(self, entries) -> int | None:
+        """Create newsletter with grouped content and add campaign to Listmonk"""
+        print("Creating grouped newsletter for new entries")
+        content = self.create_grouped_content(entries)
+        if content:
+            return self.create_campaign("", content)
+
     def create_content(self, link: str, title: str, summary: str) -> str:
         """Create content to be used as body of newsletter"""
 
@@ -200,6 +222,69 @@ class rss2newsletter:
             )
 
         return content
+
+    def create_grouped_content(self, entries) -> str:
+        """Create content to be used as body of newsletter, grouping all entries in a single body"""
+
+        with open(
+            self.config["NEWSLETTER"]["TEMPLATE_FILE"], "r", encoding="utf-8"
+        ) as f:
+            content = f.read()
+
+        block_expr = re.compile("ENTRY_BLOCK_BEGIN(.*)ENTRY_BLOCK_END", flags=re.DOTALL)
+        block_match = block_expr.search(content)
+
+        sep_expr = re.compile("BLOCK_SEPARATOR_BEGIN(.*)BLOCK_SEPARATOR_END", flags=re.DOTALL)
+        sep_match = sep_expr.search(content)
+
+        any_entry = False
+
+        if block_match:
+            block_template = block_match.group(1)
+
+            content_blocks = ""
+            for i, entry in enumerate(entries):
+                any_entry = True
+
+                if sep_match and i > 0:
+                    content_blocks += sep_match.group(1)
+
+                content_block = block_template.replace("LINK_HERE", entry.link)
+                content_block = content_block.replace("TITLE_HERE", entry.title)
+                content_block = content_block.replace("SUMMARY_HERE", entry.summary)
+
+                og_image = self.get_og_image(self.fetch_url(entry.link))
+                if og_image:
+                    content_block = content_block.replace("IMAGE_HERE", og_image) \
+                                                 .replace("IMAGE_OPTIONAL_BEGIN", "") \
+                                                 .replace("IMAGE_OPTIONAL_END", "")
+                else:
+                    # Remove optional image section
+                    content_block = re.sub(
+                        "IMAGE_OPTIONAL_BEGIN.*IMAGE_OPTIONAL_END\n",
+                        "",
+                        content_block,
+                        flags=re.DOTALL,
+                    )
+
+                content_blocks += content_block
+
+            content = re.sub(
+                            "ENTRY_BLOCK_BEGIN.*ENTRY_BLOCK_END\n",
+                            content_blocks,
+                            content,
+                            flags=re.DOTALL,
+                        )
+
+            content = re.sub(
+                "BLOCK_SEPARATOR_BEGIN.*BLOCK_SEPARATOR_END\n",
+                "",
+                content,
+                flags=re.DOTALL,
+            )
+
+        if any_entry:
+            return content
 
     def fetch_url(self, url: str) -> str | None:
         """Get response body at a URL"""

@@ -25,7 +25,9 @@ Common RSS feed sources you can turn into an email newsletter includes... your p
 2. Get rss2newsletter: `pip3 install rss2newsletter`
     - Ensure you already have Python installed
     - If you prefer to use your system package manager then Git clone this repo and run the `install.sh` script
-3. Create rss2newsletter's [configuration file](https://raw.githubusercontent.com/ElliotKillick/rss2newsletter/main/rss2newsletter.conf) and design your email with the [newsletter template file](https://raw.githubusercontent.com/ElliotKillick/rss2newsletter/main/newsletter_template.html) using the .example files as a guide. In the template here you can keep or delete the SUMMARY_HERE block as needed (if removed the newsletter will not show summary).
+3. Create rss2newsletter's [configuration file](https://raw.githubusercontent.com/ElliotKillick/rss2newsletter/main/rss2newsletter.conf) and design your email with the newsletter template file using the .example files as a guide.
+    - You can choose if you want to send a separated newsletter for each new event in the feed, or to group all new events of the interval in a grouped newsetter. For this, copy the [single template file](https://raw.githubusercontent.com/ElliotKillick/rss2newsletter/main/newsletter_template.html) or the [grouped template file](https://raw.githubusercontent.com/ElliotKillick/rss2newsletter/main/newsletter_grouped_template.html) and set the GROUP_EVENTS setting in the config file to 0 or 1, respectively.
+    - Also in the template here you can keep or delete the SUMMARY_HERE block if you want to show event summaries or not.
 4. Run `rss2newsletter` to start creating campaigns and sending out emails!
 
 ## Usage

@@ -31,3 +31,7 @@ TEMPLATE_FILE = newsletter_template.html
 # Customize your email subject line
 # rss2newsletter replaces TITLE_HERE for the new article's title
 SUBJECT_LINE = New Article: TITLE_HERE
+
+# Group all new events in a single campaign (one is true, zero is false)
+GROUP_EVENTS = 0
+
