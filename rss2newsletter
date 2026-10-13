@@ -185,7 +185,9 @@ class rss2newsletter:
 
         og_image = self.get_og_image(self.fetch_url(link))
         if og_image:
-            content = content.replace("IMAGE_HERE", og_image)
+            content = content.replace("IMAGE_HERE", og_image) \
+                             .replace("IMAGE_OPTIONAL_BEGIN", "") \
+                             .replace("IMAGE_OPTIONAL_END", "")
         else:
             # Remove optional image section
             content = re.sub(
