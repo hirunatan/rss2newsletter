@@ -1,4 +1,6 @@
 processed_entries.txt
+rss2newsletter.conf
+newsletter_template.html
 
 *.swp
 *.swo
