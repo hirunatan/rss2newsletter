@@ -102,7 +102,8 @@ class rss2newsletter:
         )
         if not int(self.config["NEWSLETTER"].get("GROUP_EVENTS", 0)):
             for new_entry in new_entries:
-                campaign_id = self.create_newsletter(new_entry.link, new_entry.title, new_entry.summary)
+                summary = new_entry.get("summary") or new_entry.get("description", "")
+                campaign_id = self.create_newsletter(new_entry.link, new_entry.title, summary)
                 send_successful = self.send_newsletter(campaign_id)
                 if send_successful:
                     self.update_processed_entries_file(new_entry.link)
@@ -249,9 +250,10 @@ class rss2newsletter:
                 if sep_match and i > 0:
                     content_blocks += sep_match.group(1)
 
+                summary = entry.get("summary") or entry.get("description", "")
                 content_block = block_template.replace("LINK_HERE", entry.link)
                 content_block = content_block.replace("TITLE_HERE", entry.title)
-                content_block = content_block.replace("SUMMARY_HERE", entry.summary)
+                content_block = content_block.replace("SUMMARY_HERE", summary)
 
                 og_image = self.get_og_image(self.fetch_url(entry.link))
                 if og_image:
