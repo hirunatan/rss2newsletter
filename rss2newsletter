@@ -90,7 +90,8 @@ class rss2newsletter:
             return
 
         # Sort feed entries chronologically
-        feed.entries.reverse()
+        if not int(self.config["NEWSLETTER"].get("REVERSE_ENTRIES", 1)):
+            feed.entries.reverse()
 
         # On first run (processed entries file does not exist)
         if self.populate_preexisting_entries((e.link for e in feed.entries)):

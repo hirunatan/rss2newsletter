@@ -8,6 +8,9 @@ POLL_INTERVAL = 300
 # rss2newsletter uses this file to keep track of new feed entries
 PROCESSED_ENTRIES_FILE = processed_entries.txt
 
+# Reverse order of RSS entries (one is yes, zero is no)
+REVERSE_ENTRIES = 1
+
 
 [LISTMONK]
 # Full URL to listmonk server
